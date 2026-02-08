@@ -184,7 +184,7 @@ export default function Tasker() \{\
               <Clock className="w-8 h-8 text-blue-600" />\
               <div>\
                 <h1 className="text-3xl font-bold text-gray-900">Tasker</h1>\
-                <p className="text-gray-600">Professional time tracking with story points</p>\
+                <p className="text-gray-600">WIN D&A Team Time Keeper</p>\
               </div>\
             </div>\
             <button\
