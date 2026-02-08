@@ -1,29 +1,37 @@
 {
-  "name": "tasker-app",
-  "version": "1.0.0",
+  "name": "verbose-waffle",
   "private": true,
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "lucide-react": "^0.263.1"
-  },
+  "version": "0.0.1",
+  "type": "module",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "react-scripts": "5.0.1"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
   }
 }
+```
+
+4. Click **"Commit changes"**
+
+---
+
+## Fix #2: Verify your file structure
+
+Make sure your repo looks like this:
+```
+verbose-waffle/
+├── index.html          (in the ROOT, not in a folder)
+├── package.json
+├── vite.config.js
+└── src/
+    ├── main.jsx
+    ├── index.css
+    └── Tasker.jsx
