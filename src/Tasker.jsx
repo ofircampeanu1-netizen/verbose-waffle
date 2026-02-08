@@ -16,30 +16,30 @@ export default function Tasker() {
     { points: 13, minHours: 24, maxHours: 999 }
   ]);
 
-  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
+   const [hydrated, setHydrated] = useState(false);
 
-  // Load data from storage
-  useEffect(() => {
-    const tasksResult = localStorage.getItem("tasks");
-    const configResult = localStorage.getItem("storyPointConfig");
+  // Load data from storage
+  useEffect(() => {
+    const tasksResult = localStorage.getItem("tasks");
+    const configResult = localStorage.getItem("storyPointConfig");
 
-    if (tasksResult) {
-      setTasks(JSON.parse(tasksResult));
-    }
+    if (tasksResult) {
+      setTasks(JSON.parse(tasksResult));
+    }
 
-    if (configResult) {
-      setStoryPointConfig(JSON.parse(configResult));
-    }
-    setHasLoadedFromStorage(true);
-  }, []);
+    if (configResult) {
+      setStoryPointConfig(JSON.parse(configResult));
+    }
+    setHydrated(true);
+  }, []);
 
-  // Save data to storage whenever it changes
-  useEffect(() => {
-    if (!hasLoadedFromStorage) return;
+  // Save data to storage whenever it changes
+  useEffect(() => {
+    if (!hydrated) return;
 
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-    localStorage.setItem("storyPointConfig", JSON.stringify(storyPointConfig));
-  }, [tasks, storyPointConfig, hasLoadedFromStorage]);
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    localStorage.setItem("storyPointConfig", JSON.stringify(storyPointConfig));
+  }, [tasks, storyPointConfig, hydrated]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -61,6 +61,13 @@ export default function Tasker() {
     
     setTasks([...tasks, newTask]);
     setNewTaskName('');
+  };
+
+  const removeTask = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+    if (activeTaskId === taskId) {
+      setActiveTaskId(null);
+    }
   };
 
   const startTask = (taskId) => {
@@ -167,7 +174,7 @@ export default function Tasker() {
               <Clock className="w-8 h-8" style={{ color: '#236192' }} />
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: '#4B4F54' }}>Tasker</h1>
-                <p className="text-gray-600">D&A Time and Story Point Task Tracker</p>
+                <p className="text-gray-600">Professional time tracking with story points</p>
               </div>
             </div>
             <button
@@ -283,20 +290,20 @@ export default function Tasker() {
         )}
 
         {/* Add Task Form */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <form onSubmit={addTask} className="flex gap-3">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <form onSubmit={addTask} className="flex gap-4">
             <input
               type="text"
               value={newTaskName}
               onChange={(e) => setNewTaskName(e.target.value)}
               placeholder="Enter task name..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 h-11"
               style={{ focusRingColor: '#236192' }}
             />
             <button
               type="submit"
-              className="px-6 py-2 text-white rounded-lg flex items-center gap-2 font-medium"
-              style={{ backgroundColor: '#C10016' }}
+              className="px-6 py-2 rounded-lg flex items-center gap-2 font-medium h-11"
+              style={{ backgroundColor: '#C10016', color: '#FFFFFF' }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9a0011'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C10016'}
             >
@@ -307,8 +314,8 @@ export default function Tasker() {
         </div>
 
         {/* Active Tasks */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4" style={{ color: '#4B4F54' }}>Active Tasks</h2>
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8 mt-8">
+          <h2 className="text-xl font-semibold mb-6" style={{ color: '#4B4F54' }}>Active Tasks</h2>
           {tasks.length === 0 ? (
             <p className="text-gray-500 text-center py-8">No tasks yet. Add a task to start tracking time.</p>
           ) : (
@@ -321,34 +328,55 @@ export default function Tasker() {
                 return (
                   <div
                     key={task.id}
-                    onClick={() => startTask(task.id)}
-                    className="p-4 rounded-lg border-2 cursor-pointer transition-all"
+                    className="p-4 rounded-lg border-2 transition-all"
                     style={{
-                      borderColor: isActive ? '#236192' : '#e5e7eb',
-                      backgroundColor: isActive ? '#eff6ff' : 'white'
+                      borderColor: '#e5e7eb',
+                      backgroundColor: 'white'
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {isActive ? (
-                          <Square className="w-5 h-5 fill-current" style={{ color: '#236192' }} />
-                        ) : (
-                          <Play className="w-5 h-5 text-gray-400" />
-                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startTask(task.id);
+                          }}
+                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                        >
+                          {isActive ? (
+                            <Square className="w-5 h-5 fill-current" style={{ color: '#236192' }} />
+                          ) : (
+                            <Play className="w-5 h-5 text-gray-400" />
+                          )}
+                        </button>
                         <span className="font-medium" style={{ color: '#4B4F54' }}>{task.name}</span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-mono font-semibold" style={{ color: isActive ? '#236192' : '#4B4F54' }}>
-                          {formatTime(currentTaskTime)}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-2xl font-mono font-semibold" style={{ color: isActive ? '#236192' : '#4B4F54' }}>
+                            {formatTime(currentTaskTime)}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 justify-end">
+                            <span className="text-sm font-medium" style={{ color: '#00B5E2' }}>
+                              {storyPoints} SP
+                            </span>
+                            {isActive && (
+                              <span className="text-xs font-medium" style={{ color: '#74AA50' }}>RUNNING</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-medium" style={{ color: '#00B5E2' }}>
-                            {storyPoints} SP
-                          </span>
-                          {isActive && (
-                            <span className="text-xs font-medium" style={{ color: '#74AA50' }}>RUNNING</span>
-                          )}
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeTask(task.id);
+                          }}
+                          className="p-2 rounded-lg transition-colors ml-2"
+                          style={{ color: '#C10016' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -363,13 +391,13 @@ export default function Tasker() {
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4" style={{ color: '#4B4F54' }}>Summary</h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg" style={{ backgroundColor: '#eff6ff' }}>
+              <div className="p-4 rounded-lg border-2" style={{ borderColor: '#236192' }}>
                 <div className="text-sm text-gray-600 mb-1">Total Time</div>
                 <div className="text-2xl font-bold" style={{ color: '#236192' }}>
                   {formatTime(tasks.reduce((sum, task) => sum + getTaskCurrentTime(task), 0))}
                 </div>
               </div>
-              <div className="p-4 rounded-lg" style={{ backgroundColor: '#e0f7ff' }}>
+              <div className="p-4 rounded-lg border-2" style={{ borderColor: '#00B5E2' }}>
                 <div className="text-sm text-gray-600 mb-1">Total Story Points</div>
                 <div className="text-2xl font-bold" style={{ color: '#00B5E2' }}>
                   {tasks.reduce((sum, task) => sum + calculateStoryPoints(getTaskCurrentTime(task)), 0)} SP
