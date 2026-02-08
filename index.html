@@ -1,12 +1,502 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tasker App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasker - Time Tracking with Story Points</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .focus-ring:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #236192;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-8 h-8" style="color: #236192;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                        <path d="M12 6v6l4 2" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div>
+                        <h1 class="text-3xl font-bold" style="color: #4B4F54;">Tasker</h1>
+                        <p class="text-gray-600">Professional time tracking with story points</p>
+                    </div>
+                </div>
+                <button onclick="toggleSettings()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-6 h-6" style="color: #4B4F54;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display: none;">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                    <h2 class="text-2xl font-bold" style="color: #4B4F54;">Story Point Configuration</h2>
+                    <button onclick="toggleSettings()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-gray-600 mb-6">
+                        Configure how hours translate to story points. Each tier defines a range of hours.
+                    </p>
+                    
+                    <div id="storyPointConfigList" class="space-y-4"></div>
+                    
+                    <div class="mt-6 flex gap-3">
+                        <button onclick="addStoryPointTier()" class="flex-1 px-4 py-2 border-2 rounded-lg font-medium flex items-center justify-center gap-2" style="border-color: #00B5E2; color: #00B5E2;" onmouseenter="this.style.backgroundColor='#e0f7ff'" onmouseleave="this.style.backgroundColor='transparent'">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Add Tier
+                        </button>
+                        <button onclick="toggleSettings()" class="flex-1 px-4 py-2 text-white rounded-lg font-medium flex items-center justify-center gap-2" style="background-color: #74AA50;" onmouseenter="this.style.backgroundColor='#5d8a40'" onmouseleave="this.style.backgroundColor='#74AA50'">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Save & Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Task Form -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <form onsubmit="addTask(event)" class="flex gap-4">
+                <input
+                    type="text"
+                    id="newTaskInput"
+                    placeholder="Enter task name..."
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 h-11"
+                    style="--tw-ring-color: #236192;"
+                />
+                <button
+                    type="submit"
+                    class="px-6 py-2 rounded-lg flex items-center gap-2 font-medium h-11"
+                    style="background-color: #C10016; color: #FFFFFF;"
+                    onmouseenter="this.style.backgroundColor='#9a0011'"
+                    onmouseleave="this.style.backgroundColor='#C10016'"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Add Task
+                </button>
+            </form>
+        </div>
+
+        <!-- Active Tasks -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8 mt-8">
+            <h2 class="text-xl font-semibold mb-6" style="color: #4B4F54;">Active Tasks</h2>
+            <div id="tasksList">
+                <p class="text-gray-500 text-center py-8">No tasks yet. Add a task to start tracking time.</p>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div id="summarySection" class="bg-white rounded-lg shadow-sm p-6 mb-6" style="display: none;">
+            <h2 class="text-xl font-semibold mb-4" style="color: #4B4F54;">Summary</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 rounded-lg border-2" style="border-color: #236192;">
+                    <div class="text-sm text-gray-600 mb-1">Total Time</div>
+                    <div id="totalTime" class="text-2xl font-bold" style="color: #236192;">0:00:00</div>
+                </div>
+                <div class="p-4 rounded-lg border-2" style="border-color: #00B5E2;">
+                    <div class="text-sm text-gray-600 mb-1">Total Story Points</div>
+                    <div id="totalStoryPoints" class="text-2xl font-bold" style="color: #00B5E2;">0 SP</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Log -->
+        <div id="timeLogSection" class="bg-white rounded-lg shadow-sm p-6" style="display: none;">
+            <h2 class="text-xl font-semibold mb-4" style="color: #4B4F54;">Time Log</h2>
+            <div id="timeLogContent" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let activeTaskId = null;
+        let currentTime = Date.now();
+        let storyPointConfig = [
+            { points: 1, minHours: 0, maxHours: 4 },
+            { points: 2, minHours: 4, maxHours: 8 },
+            { points: 3, minHours: 8, maxHours: 12 },
+            { points: 5, minHours: 12, maxHours: 16 },
+            { points: 8, minHours: 16, maxHours: 24 },
+            { points: 13, minHours: 24, maxHours: 999 }
+        ];
+
+        // Load data from localStorage
+        function loadData() {
+            const savedTasks = localStorage.getItem('tasks');
+            const savedConfig = localStorage.getItem('storyPointConfig');
+            
+            if (savedTasks) {
+                tasks = JSON.parse(savedTasks);
+            }
+            
+            if (savedConfig) {
+                storyPointConfig = JSON.parse(savedConfig);
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            localStorage.setItem('storyPointConfig', JSON.stringify(storyPointConfig));
+        }
+
+        // Update current time every second
+        setInterval(() => {
+            currentTime = Date.now();
+            renderTasks();
+            renderSummary();
+            renderTimeLog();
+        }, 1000);
+
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            const isVisible = modal.style.display !== 'none';
+            modal.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) {
+                renderStoryPointConfig();
+            }
+        }
+
+        function renderStoryPointConfig() {
+            const list = document.getElementById('storyPointConfigList');
+            const sorted = [...storyPointConfig].sort((a, b) => a.minHours - b.minHours);
+            
+            list.innerHTML = sorted.map((config, index) => `
+                <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex-1 grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium mb-1" style="color: #4B4F54;">Story Points</label>
+                            <input
+                                type="number"
+                                value="${config.points}"
+                                onchange="updateStoryPointConfig(${index}, 'points', this.value)"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium mb-1" style="color: #4B4F54;">Min Hours</label>
+                            <input
+                                type="number"
+                                step="0.5"
+                                value="${config.minHours}"
+                                onchange="updateStoryPointConfig(${index}, 'minHours', this.value)"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium mb-1" style="color: #4B4F54;">Max Hours</label>
+                            <input
+                                type="number"
+                                step="0.5"
+                                value="${config.maxHours}"
+                                onchange="updateStoryPointConfig(${index}, 'maxHours', this.value)"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        onclick="removeStoryPointTier(${index})"
+                        ${storyPointConfig.length === 1 ? 'disabled' : ''}
+                        class="p-2 rounded-lg transition-colors ${storyPointConfig.length === 1 ? 'opacity-30 cursor-not-allowed' : ''}"
+                        style="color: #C10016;"
+                        onmouseenter="if(!this.disabled) this.style.backgroundColor='#fee2e2'"
+                        onmouseleave="this.style.backgroundColor='transparent'"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function updateStoryPointConfig(index, field, value) {
+            const sorted = [...storyPointConfig].sort((a, b) => a.minHours - b.minHours);
+            const originalIndex = storyPointConfig.findIndex(c => 
+                c.points === sorted[index].points && 
+                c.minHours === sorted[index].minHours && 
+                c.maxHours === sorted[index].maxHours
+            );
+            storyPointConfig[originalIndex][field] = parseFloat(value) || 0;
+            saveData();
+            renderStoryPointConfig();
+        }
+
+        function addStoryPointTier() {
+            const lastTier = storyPointConfig[storyPointConfig.length - 1];
+            storyPointConfig.push({
+                points: lastTier.points + 1,
+                minHours: lastTier.maxHours,
+                maxHours: lastTier.maxHours + 8
+            });
+            saveData();
+            renderStoryPointConfig();
+        }
+
+        function removeStoryPointTier(index) {
+            if (storyPointConfig.length > 1) {
+                const sorted = [...storyPointConfig].sort((a, b) => a.minHours - b.minHours);
+                const originalIndex = storyPointConfig.findIndex(c => 
+                    c.points === sorted[index].points && 
+                    c.minHours === sorted[index].minHours && 
+                    c.maxHours === sorted[index].maxHours
+                );
+                storyPointConfig.splice(originalIndex, 1);
+                saveData();
+                renderStoryPointConfig();
+            }
+        }
+
+        function addTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('newTaskInput');
+            const taskName = input.value.trim();
+            
+            if (!taskName) return;
+            
+            const newTask = {
+                id: Date.now(),
+                name: taskName,
+                logs: [],
+                totalTime: 0
+            };
+            
+            tasks.push(newTask);
+            input.value = '';
+            saveData();
+            renderTasks();
+            renderSummary();
+        }
+
+        function removeTask(taskId) {
+            tasks = tasks.filter(task => task.id !== taskId);
+            if (activeTaskId === taskId) {
+                activeTaskId = null;
+            }
+            saveData();
+            renderTasks();
+            renderSummary();
+            renderTimeLog();
+        }
+
+        function startTask(taskId) {
+            const now = Date.now();
+            
+            // Stop current active task
+            if (activeTaskId !== null) {
+                tasks = tasks.map(task => {
+                    if (task.id === activeTaskId) {
+                        const activeLog = task.logs[task.logs.length - 1];
+                        if (activeLog && !activeLog.endTime) {
+                            const duration = now - activeLog.startTime;
+                            return {
+                                ...task,
+                                logs: [
+                                    ...task.logs.slice(0, -1),
+                                    { ...activeLog, endTime: now }
+                                ],
+                                totalTime: task.totalTime + duration
+                            };
+                        }
+                    }
+                    return task;
+                });
+            }
+            
+            // Start new task or stop if clicking same task
+            if (taskId !== activeTaskId) {
+                tasks = tasks.map(task => {
+                    if (task.id === taskId) {
+                        return {
+                            ...task,
+                            logs: [...task.logs, { startTime: now, endTime: null }]
+                        };
+                    }
+                    return task;
+                });
+                activeTaskId = taskId;
+            } else {
+                activeTaskId = null;
+            }
+            
+            saveData();
+            renderTasks();
+            renderTimeLog();
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function getTaskCurrentTime(task) {
+            let total = task.totalTime;
+            const activeLog = task.logs[task.logs.length - 1];
+            if (activeLog && !activeLog.endTime && task.id === activeTaskId) {
+                total += currentTime - activeLog.startTime;
+            }
+            return total;
+        }
+
+        function calculateStoryPoints(ms) {
+            const hours = ms / (1000 * 60 * 60);
+            const sorted = [...storyPointConfig].sort((a, b) => a.minHours - b.minHours);
+            
+            for (let config of sorted) {
+                if (hours >= config.minHours && hours < config.maxHours) {
+                    return config.points;
+                }
+            }
+            return sorted[sorted.length - 1].points;
+        }
+
+        function formatLogTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('tasksList');
+            
+            if (tasks.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-center py-8">No tasks yet. Add a task to start tracking time.</p>';
+                return;
+            }
+            
+            list.innerHTML = '<div class="space-y-3">' + tasks.map(task => {
+                const isActive = task.id === activeTaskId;
+                const currentTaskTime = getTaskCurrentTime(task);
+                const storyPoints = calculateStoryPoints(currentTaskTime);
+                
+                return `
+                    <div class="p-4 rounded-lg border-2 transition-all" style="border-color: #e5e7eb; background-color: white;">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button onclick="startTask(${task.id})" class="p-1 hover:bg-gray-100 rounded transition-colors">
+                                    ${isActive ? `
+                                        <svg class="w-5 h-5 fill-current" style="color: #236192;" viewBox="0 0 24 24">
+                                            <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+                                        </svg>
+                                    ` : `
+                                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    `}
+                                </button>
+                                <span class="font-medium" style="color: #4B4F54;">${task.name}</span>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <div class="text-2xl font-mono font-semibold" style="color: ${isActive ? '#236192' : '#4B4F54'};">
+                                        ${formatTime(currentTaskTime)}
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1 justify-end">
+                                        <span class="text-sm font-medium" style="color: #00B5E2;">
+                                            ${storyPoints} SP
+                                        </span>
+                                        ${isActive ? '<span class="text-xs font-medium" style="color: #74AA50;">RUNNING</span>' : ''}
+                                    </div>
+                                </div>
+                                <button
+                                    onclick="removeTask(${task.id})"
+                                    class="p-2 rounded-lg transition-colors ml-2"
+                                    style="color: #C10016;"
+                                    onmouseenter="this.style.backgroundColor='#fee2e2'"
+                                    onmouseleave="this.style.backgroundColor='transparent'"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('') + '</div>';
+        }
+
+        function renderSummary() {
+            const section = document.getElementById('summarySection');
+            
+            if (tasks.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            
+            const totalTime = tasks.reduce((sum, task) => sum + getTaskCurrentTime(task), 0);
+            const totalSP = tasks.reduce((sum, task) => sum + calculateStoryPoints(getTaskCurrentTime(task)), 0);
+            
+            document.getElementById('totalTime').textContent = formatTime(totalTime);
+            document.getElementById('totalStoryPoints').textContent = `${totalSP} SP`;
+        }
+
+        function renderTimeLog() {
+            const section = document.getElementById('timeLogSection');
+            const content = document.getElementById('timeLogContent');
+            const tasksWithLogs = tasks.filter(t => t.logs.length > 0);
+            
+            if (tasksWithLogs.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            
+            content.innerHTML = tasksWithLogs.map(task => `
+                <div class="border-l-4 pl-4" style="border-color: #236192;">
+                    <h3 class="font-medium mb-2" style="color: #4B4F54;">${task.name}</h3>
+                    <div class="space-y-1">
+                        ${task.logs.map(log => `
+                            <div class="text-sm text-gray-600 font-mono">
+                                ${formatLogTime(log.startTime)} - ${log.endTime ? formatLogTime(log.endTime) : 'ongoing'}
+                                <span class="ml-2 text-gray-500">
+                                    (${formatTime(log.endTime ? log.endTime - log.startTime : currentTime - log.startTime)})
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        loadData();
+        renderTasks();
+        renderSummary();
+        renderTimeLog();
+    </script>
+</body>
 </html>
