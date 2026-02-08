@@ -16,40 +16,30 @@ export default function Tasker() {
     { points: 13, minHours: 24, maxHours: 999 }
   ]);
 
+  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
+
   // Load data from storage
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const tasksResult = await window.storage.get('tasks');
-        const configResult = await window.storage.get('storyPointConfig');
-        
-        if (tasksResult?.value) {
-          setTasks(JSON.parse(tasksResult.value));
-        }
-        if (configResult?.value) {
-          setStoryPointConfig(JSON.parse(configResult.value));
-        }
-      } catch (error) {
-        console.log('No saved data found, using defaults');
-      }
-    };
-    loadData();
+    const tasksResult = localStorage.getItem("tasks");
+    const configResult = localStorage.getItem("storyPointConfig");
+
+    if (tasksResult) {
+      setTasks(JSON.parse(tasksResult));
+    }
+
+    if (configResult) {
+      setStoryPointConfig(JSON.parse(configResult));
+    }
+    setHasLoadedFromStorage(true);
   }, []);
 
   // Save data to storage whenever it changes
   useEffect(() => {
-    const saveData = async () => {
-      try {
-        await window.storage.set('tasks', JSON.stringify(tasks));
-        await window.storage.set('storyPointConfig', JSON.stringify(storyPointConfig));
-      } catch (error) {
-        console.error('Error saving data:', error);
-      }
-    };
-    if (tasks.length > 0 || storyPointConfig.length > 0) {
-      saveData();
-    }
-  }, [tasks, storyPointConfig]);
+    if (!hasLoadedFromStorage) return;
+
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    localStorage.setItem("storyPointConfig", JSON.stringify(storyPointConfig));
+  }, [tasks, storyPointConfig, hasLoadedFromStorage]);
 
   useEffect(() => {
     const interval = setInterval(() => {
